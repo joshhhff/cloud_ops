@@ -42,6 +42,7 @@ export const authService = {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
+    // this will require using bcrypt for my password hashing
     const user = mockUsers.find(u => u.email === email && u.password === password);
     if (!user) {
       throw new Error('Invalid email or password');
@@ -49,9 +50,9 @@ export const authService = {
     
     const { password: _, ...userWithoutPassword } = user;
     
-    // Store in localStorage
+    // store user and token in local storage for web session
     localStorage.setItem('auth_user', JSON.stringify(userWithoutPassword));
-    localStorage.setItem('auth_token', 'mock_jwt_token_' + user.id);
+    localStorage.setItem('auth_token', 'mock_jwt_token_' + user.id);    // need to implement jwt token generation
     
     return userWithoutPassword;
   },
@@ -72,6 +73,8 @@ export const authService = {
       name,
       role: 'user' as const,
     };
+
+    // need to put data in database, as well as hashed password (bcrypt)
     
     // Store in localStorage
     localStorage.setItem('auth_user', JSON.stringify(newUser));
@@ -81,6 +84,7 @@ export const authService = {
   },
 
   logout(): void {
+    // clear web session (this will probably differ when jwt is implemented)
     localStorage.removeItem('auth_user');
     localStorage.removeItem('auth_token');
   },
@@ -101,6 +105,7 @@ export const authService = {
   },
 
   isAuthenticated(): boolean {
+    // again this will differ when jwt is implemented (checking token validity)
     if (typeof window === 'undefined') return false;
     return !!localStorage.getItem('auth_token');
   },

@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, Filter, Download } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Column {
   key: string;
@@ -28,6 +30,7 @@ interface DataTableProps {
 }
 
 export default function DataTable({ data, columns, title, searchKey = 'name' }: DataTableProps) {
+    const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
@@ -131,7 +134,7 @@ export default function DataTable({ data, columns, title, searchKey = 'name' }: 
           </TableHeader>
           <TableBody>
             {sortedData.map((item, index) => (
-              <TableRow key={index} className="hover:bg-slate-50">
+              <TableRow key={index} className="hover:bg-slate-50" onClick={() => router.push(`/sales/${item.id}`)}>
                 {columns.map((column) => (
                   <TableCell key={column.key} className="text-slate-900">
                     {renderCellValue(item[column.key], column.key)}

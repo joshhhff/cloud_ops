@@ -50,9 +50,9 @@ export const customers = [
 ];
 
 export const salesData = [
-  { id: 'SALE-001', customer: 'Acme Corporation', memo: 'Demo Order 1', total: 2250, date: '2024-01-15', status: 'Completed' },
-  { id: 'SALE-002', customer: 'Tech Solutions Inc', memo: 'Demo Order 2', total: 3600, date: '2024-01-14', status: 'Pending' },
-  { id: 'SALE-003', customer: 'Global Enterprises', memo: 'Demo Order 3', total: 1250, date: '2024-01-13', status: 'Completed' },
-  { id: 'SALE-004', customer: 'Innovation Labs', memo: 'Demo Order 4', total: 1050, date: '2024-01-12', status: 'Processing' },
-  { id: 'SALE-005', customer: 'Digital Dynamics', memo: 'Demo Order 5', total: 2200, date: '2024-01-11', status: 'Completed' },
+  { id: 1, docnumber: 'SALE-001', customer: 'Acme Corporation', memo: 'Demo Order 1', total: 2250, date: '2024-01-15', status: 'Completed' },
+  { id: 2, docnumber: 'SALE-002', customer: 'Tech Solutions Inc', memo: 'Demo Order 2', total: 3600, date: '2024-01-14', status: 'Pending' },
+  { id: 3, docnumber: 'SALE-003', customer: 'Global Enterprises', memo: 'Demo Order 3', total: 1250, date: '2024-01-13', status: 'Completed' },
+  { id: 4, docnumber: 'SALE-004', customer: 'Innovation Labs', memo: 'Demo Order 4', total: 1050, date: '2024-01-12', status: 'Processing' },
+  { id: 5, docnumber: 'SALE-005', customer: 'Digital Dynamics', memo: 'Demo Order 5', total: 2200, date: '2024-01-11', status: 'Completed' },
 ];

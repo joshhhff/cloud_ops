@@ -4,7 +4,8 @@ import { salesData } from '@/lib/mock-data';
 import Link from 'next/link';
 
 const columns = [
-  { key: 'id', label: 'Transaction Number', sortable: true },
+  { key: 'id', label: 'ID', sortable: true },
+  { key: 'docnumber', label: 'Transaction Number', sortable: true },
   { key: 'date', label: 'Date', sortable: true },
   { key: 'customer', label: 'Customer', sortable: true },
   { key: 'status', label: 'Status', sortable: true },
