@@ -6,10 +6,10 @@ CloudOps is a modern ERP system designed to streamline business operations. It e
 
 - **Inventory & Stock Management:** Track and manage your products and stock levels in real time.
 - **Sales Orders:** Create, manage, and fulfill sales orders with ease.
-![Order List](assets/Order-List.png)
+![Order List](readme-assets/Order-List.png)
 - **Purchase Orders:** Raise and track purchase orders to suppliers.
 - **Analytics Dashboard:** Gain insights into your business with detailed analytics and reporting.
-![Analytics Dashboard](assets/Home-Dashboard.png)
+![Analytics Dashboard](readme-assets/Home-Dashboard.png)
 
 ## Getting Started
 
