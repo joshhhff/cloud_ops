@@ -1,11 +1,11 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, AuthState, authService } from '@/lib/auth';
+import { User, AuthState, authService, CompanyRegistrationData } from '@/lib/auth';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
+  register: (email: string, password: string, name: string, companyData?: CompanyRegistrationData) => Promise<void>;
   logout: () => void;
 }
 
@@ -43,10 +43,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (email: string, password: string, name: string) => {
+  const register = async (email: string, password: string, name: string, companyData?: CompanyRegistrationData) => {
     setState(prev => ({ ...prev, isLoading: true }));
     try {
-      const user = await authService.register(email, password, name);
+      const user = await authService.register(email, password, name, companyData);
       setState({
         user,
         isAuthenticated: true,

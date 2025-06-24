@@ -1,78 +1,54 @@
-'use client';
-import React, { useState } from "react";
-import DataTable from '@/components/tables/data-table';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { Suspense } from 'react';
+import LocationsClient from '@/components/locations/locations-client';
+import SystemLoadingPage from '@/components/ui/system-loading-page';
+import { GetAll, GetDataByField, TableMap } from '@/lib/services/database/database-controller';
 
-type Location = {
-    id: number;
-    name: string;
-    active: boolean;
-    fulfillable: boolean;
-};
+export default async function Locations() {
+   const locationData = async () => {
+  const result = await GetAll('location');
 
-const initialLocations: Location[] = [
-    { id: 1, name: "Warehouse A", active: true, fulfillable: true },
-    { id: 2, name: "Storefront B", active: false, fulfillable: false },
-    { id: 3, name: "Distribution Center C", active: true, fulfillable: false },
-];
+  if (!result.success) {
+    console.error("Failed to fetch locations:", result.errorMessage);
+    return [];
+  }
 
-const columns = [
-    { key: 'name', label: 'Name', sortable: true },
-    { 
-        key: 'active', 
-        label: 'Active', 
-        sortable: true,
-        render: (row: Location) => (
-            <span className={`inline-flex items-center gap-2 ${row.active ? 'text-green-600' : 'text-red-600'}`}>
-                <span className={`w-3 h-3 rounded-full ${row.active ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                {row.active ? 'Active' : 'Inactive'}
-            </span>
-        )
-    },
-    { 
-        key: 'fulfillable', 
-        label: 'Fulfillable', 
-        sortable: true,
-        render: (row: Location) => (
-            <span className={row.fulfillable ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
-                {row.fulfillable ? 'Yes' : 'No'}
-            </span>
-        )
-    },
-];
+  console.log("Locations fetched successfully:", result.data);
 
-export default function LocationsPage() {
-    const [locations, setLocations] = useState<Location[]>(initialLocations);
+  const enrichedLocations = await Promise.all(
+    result.data.map(async (location: any) => {
+      const addressData = await GetDataByField('locationId', location.id, 'locationAddress' as keyof TableMap);
 
-    const handleCreateLocation = () => {
-        const newLocation: Location = {
-            id: locations.length + 1,
-            name: `New Location ${locations.length + 1}`,
-            active: true,
-            fulfillable: false,
-        };
-        setLocations([newLocation, ...locations]);
-    };
+      if (addressData.success) {
+        console.log(`Address for location ${location.id}:`, addressData);
+        location.address = addressData.data[0]
 
-    return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold text-slate-900">Locations</h1>
-                <p className="text-slate-600 mt-2">Manage your business locations and fulfillment centers.</p>
-                <Button 
-                    className="bg-blue-600 hover:bg-blue-700 text-white mt-4"
-                    onClick={handleCreateLocation}
-                >
-                    + New Location
-                </Button>
-            </div>
-            <DataTable
-                data={locations}
-                columns={columns}
-                title="Locations"
-                searchKey="name"
-            />
-        </div>
-    );
+        // Remove unwanted fields from address using destructuring
+        const { locationId, id, createdAt, updatedAt, recordType, ...cleanedAddress } = location.address;
+        location.address = cleanedAddress;
+
+        // Remove any null, undefined, or empty string values from the address object
+        Object.keys(location.address).forEach(key => {
+          if (location.address[key] === null || location.address[key] === undefined || location.address[key] === '') {
+            delete location.address[key];
+          }
+        });
+      } else {
+        console.error(`Failed to fetch address for location ${location.id}:`, addressData.errorMessage);
+        location.address = null;
+      }
+
+      return location;
+    })
+  );
+
+  return enrichedLocations;
+}
+    const locationsResult = await locationData();
+    console.log("Rendering LocationsClient with data:", locationsResult);
+
+  return (
+    <Suspense fallback={<SystemLoadingPage />}>
+      <LocationsClient locationData={locationsResult || []} />
+    </Suspense>
+  );
 }

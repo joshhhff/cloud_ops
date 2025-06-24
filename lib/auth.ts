@@ -4,12 +4,34 @@ export interface User {
   name: string;
   role: 'admin' | 'manager' | 'user';
   avatar?: string;
+  companyId?: string;
+  employeeId?: string;
 }
 
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+}
+
+export interface CompanyRegistrationData {
+  companyName: string;
+  companyEmail: string;
+  companyPhone?: string;
+  companyAddress?: string;
+  companyCity?: string;
+  companyState?: string;
+  companyZip?: string;
+  companyCountry?: string;
+  industry?: string;
+  companySize?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  jobTitle: string;
+  password: string;
+  confirmPassword: string;
 }
 
 // Mock user database
@@ -20,6 +42,8 @@ const mockUsers = [
     password: 'admin123',
     name: 'John Doe',
     role: 'admin' as const,
+    companyId: 'COMP-001',
+    employeeId: 'EMP-001',
   },
   {
     id: '2',
@@ -27,6 +51,8 @@ const mockUsers = [
     password: 'manager123',
     name: 'Jane Smith',
     role: 'manager' as const,
+    companyId: 'COMP-001',
+    employeeId: 'EMP-002',
   },
   {
     id: '3',
@@ -34,6 +60,8 @@ const mockUsers = [
     password: 'user123',
     name: 'Bob Johnson',
     role: 'user' as const,
+    companyId: 'COMP-001',
+    employeeId: 'EMP-003',
   },
 ];
 
@@ -42,7 +70,6 @@ export const authService = {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // this will require using bcrypt for my password hashing
     const user = mockUsers.find(u => u.email === email && u.password === password);
     if (!user) {
       throw new Error('Invalid email or password');
@@ -50,16 +77,16 @@ export const authService = {
     
     const { password: _, ...userWithoutPassword } = user;
     
-    // store user and token in local storage for web session
+    // Store in localStorage
     localStorage.setItem('auth_user', JSON.stringify(userWithoutPassword));
-    localStorage.setItem('auth_token', 'mock_jwt_token_' + user.id);    // need to implement jwt token generation
+    localStorage.setItem('auth_token', 'mock_jwt_token_' + user.id);
     
     return userWithoutPassword;
   },
 
-  async register(email: string, password: string, name: string): Promise<User> {
+  async register(email: string, password: string, name: string, companyData?: CompanyRegistrationData): Promise<User> {
     // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
     // Check if user already exists
     const existingUser = mockUsers.find(u => u.email === email);
@@ -67,14 +94,43 @@ export const authService = {
       throw new Error('User already exists with this email');
     }
     
+    // Generate IDs
+    const userId = Date.now().toString();
+    const companyId = 'COMP-' + Date.now().toString().slice(-3);
+    const employeeId = 'EMP-' + Date.now().toString().slice(-3);
+    
+    // Create company record (in a real app, this would be saved to database)
+    if (companyData) {
+      const company = {
+        id: companyId,
+        name: companyData.companyName,
+        email: companyData.companyEmail,
+        phone: companyData.companyPhone,
+        address: {
+          street: companyData.companyAddress,
+          city: companyData.companyCity,
+          state: companyData.companyState,
+          zipCode: companyData.companyZip,
+          country: companyData.companyCountry,
+        },
+        industry: companyData.industry,
+        size: companyData.companySize,
+        createdDate: new Date().toISOString(),
+        ownerId: userId,
+      };
+      
+      // Store company data (in localStorage for demo)
+      localStorage.setItem('company_data', JSON.stringify(company));
+    }
+    
     const newUser = {
-      id: Date.now().toString(),
+      id: userId,
       email,
       name,
-      role: 'user' as const,
+      role: 'admin' as const, // First user is always admin
+      companyId,
+      employeeId,
     };
-
-    // need to put data in database, as well as hashed password (bcrypt)
     
     // Store in localStorage
     localStorage.setItem('auth_user', JSON.stringify(newUser));
@@ -84,7 +140,6 @@ export const authService = {
   },
 
   logout(): void {
-    // clear web session (this will probably differ when jwt is implemented)
     localStorage.removeItem('auth_user');
     localStorage.removeItem('auth_token');
   },
@@ -105,7 +160,6 @@ export const authService = {
   },
 
   isAuthenticated(): boolean {
-    // again this will differ when jwt is implemented (checking token validity)
     if (typeof window === 'undefined') return false;
     return !!localStorage.getItem('auth_token');
   },

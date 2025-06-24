@@ -9,8 +9,18 @@ import AuthPage from '@/app/auth/page';
 
 const inter = Inter({ subsets: ['latin'] });
 
+declare global {
+  interface BigInt {
+    toJSON(): string;
+  }
+}
+
+BigInt.prototype.toJSON = function () {
+  return this.toString();
+};
+
 export const metadata: Metadata = {
-  title: 'ERP Suite - Enterprise Resource Planning',
+  title: 'CloudOps - Enterprise Resource Planning',
   description: 'Comprehensive ERP solution for modern businesses',
 };
 
