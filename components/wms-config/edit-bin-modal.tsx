@@ -19,49 +19,50 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { aisles, zones, locations, getAisleById, getZoneById } from '@/lib/mock-data';
 import { Edit, Package } from 'lucide-react';
 
 interface EditBinModalProps {
+  locations: any[];
   bin: any;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function EditBinModal({ bin, isOpen, onClose }: EditBinModalProps) {
+export default function EditBinModal({ locations, bin, isOpen, onClose }: EditBinModalProps) {
   const [formData, setFormData] = useState({
     name: '',
     aisleId: '',
     description: '',
-    binType: '',
-    capacity: '',
-    weight: '',
-    height: '',
-    barcode: '',
-    notes: '',
+    code: '',
   });
 
   const [selectedLocationId, setSelectedLocationId] = useState('');
   const [selectedZoneId, setSelectedZoneId] = useState('');
+  const [selectedAisleId, setSelectedAisleId] = useState('');
 
   useEffect(() => {
     if (bin) {
-      const aisle = getAisleById(bin.aisleId);
-      const zone = aisle ? getZoneById(aisle.zoneId) : null;
-      
+    const aisle = locations
+      .flatMap((location: any) => location.zones)
+      .flatMap((zone: any) => zone.aisles)
+      .find((a: any) => a.id === bin.aisleId);
+
+    const zone = locations
+      .flatMap((location: any) => location.zones)
+      .find((z: any) => z.id === aisle?.zoneId);
+
+    const location = locations.find((loc: any) => loc.id === zone?.locationId);
+
       setFormData({
         name: bin.name || '',
         aisleId: bin.aisleId || '',
         description: bin.description || '',
-        binType: bin.binType || '',
-        capacity: bin.capacity || '',
-        weight: bin.weight || '',
-        height: bin.height || '',
-        barcode: bin.barcode || '',
-        notes: bin.notes || '',
+        code: bin.code || '',
       });
+
       setSelectedLocationId(zone?.locationId || '');
       setSelectedZoneId(aisle?.zoneId || '');
+      setSelectedAisleId(bin.aisleId || ''); // ✅ important to set this
     }
   }, [bin]);
 
@@ -72,46 +73,61 @@ export default function EditBinModal({ bin, isOpen, onClose }: EditBinModalProps
   const handleLocationChange = (locationId: string) => {
     setSelectedLocationId(locationId);
     setSelectedZoneId('');
+    setSelectedAisleId('');
     setFormData(prev => ({ ...prev, aisleId: '' }));
   };
 
   const handleZoneChange = (zoneId: string) => {
     setSelectedZoneId(zoneId);
+    setSelectedAisleId('');
     setFormData(prev => ({ ...prev, aisleId: '' }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleAisleChange = (aisleId: string) => {
+    setSelectedAisleId(aisleId);
+    setFormData(prev => ({ ...prev, aisleId }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Here you would typically make an API call to update the bin
     console.log('Updating bin:', bin.id, formData);
+    
+    const dataToSend = {
+        name: formData.name,
+        code: formData.code,
+        description: formData.description,
+        aisleId: formData.aisleId,
+    }
+
+    const updateBinRequest = await fetch(`/api/other/wms-config/bins`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id: bin.id, ...dataToSend }),
+    });
+
+    const updateBinResponse = await updateBinRequest.json();
+
+    if (!updateBinRequest.ok) {
+      alert(`Error updating bin: ${updateBinResponse.error}`);
+      return;
+    } else {
+      if (typeof window !== 'undefined') {
+            window.location.reload();
+        }
+    }
 
     onClose();
   };
 
-  // Only show locations that have advanced WMS enabled
-  const wmsEnabledLocations = locations.filter(location => location.advancedWmsEnabled);
-
-  // Filter zones by selected location
-  const filteredZones = selectedLocationId 
-    ? zones.filter(zone => zone.locationId === selectedLocationId)
+  const zones = selectedLocationId
+    ? locations.find((l) => l.id === selectedLocationId)?.zones ?? []
     : [];
 
-  // Filter aisles by selected zone
-  const filteredAisles = selectedZoneId 
-    ? aisles.filter(aisle => aisle.zoneId === selectedZoneId)
+  const aisles = selectedZoneId
+    ? zones.find((z: any) => z.id === selectedZoneId)?.aisles ?? []
     : [];
-
-  const binTypes = [
-    'Standard Bin',
-    'Shelf Bin',
-    'Drawer Bin',
-    'Pallet Location',
-    'Floor Location',
-    'Hanging Bin',
-    'Bulk Bin',
-    'Pick Bin'
-  ];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -144,33 +160,32 @@ export default function EditBinModal({ bin, isOpen, onClose }: EditBinModalProps
                   />
                 </div>
                 <div>
-                  <Label htmlFor="binType">Bin Type</Label>
-                  <Select value={formData.binType} onValueChange={(value) => handleInputChange('binType', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select bin type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {binTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="code">Bin Code *</Label>
+                  <Input
+                    id="code"
+                    value={formData.code}
+                    onChange={(e) => handleInputChange('code', e.target.value)}
+                    required
+                    placeholder="e.g., SHELF-001"
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="location">Location *</Label>
-                  <Select value={selectedLocationId} onValueChange={handleLocationChange} required>
+                  <Select
+                    value={selectedLocationId}
+                    onValueChange={handleLocationChange}
+                    required
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select location" />
+                      <SelectValue placeholder="Select Location" />
                     </SelectTrigger>
                     <SelectContent>
-                      {wmsEnabledLocations.map((location) => (
-                        <SelectItem key={location.id} value={location.id}>
-                          {location.name}
+                      {locations.map((loc) => (
+                        <SelectItem key={loc.id} value={loc.id}>
+                          {loc.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -178,17 +193,17 @@ export default function EditBinModal({ bin, isOpen, onClose }: EditBinModalProps
                 </div>
                 <div>
                   <Label htmlFor="zone">Zone *</Label>
-                  <Select 
-                    value={selectedZoneId} 
-                    onValueChange={handleZoneChange} 
-                    required
+                  <Select
+                    value={selectedZoneId}
+                    onValueChange={handleZoneChange}
                     disabled={!selectedLocationId}
+                    required
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={selectedLocationId ? "Select zone" : "Select location first"} />
+                      <SelectValue placeholder="Select Zone" />
                     </SelectTrigger>
                     <SelectContent>
-                      {filteredZones.map((zone) => (
+                      {zones.map((zone: any) => (
                         <SelectItem key={zone.id} value={zone.id}>
                           {zone.name}
                         </SelectItem>
@@ -198,17 +213,17 @@ export default function EditBinModal({ bin, isOpen, onClose }: EditBinModalProps
                 </div>
                 <div>
                   <Label htmlFor="aisleId">Aisle *</Label>
-                  <Select 
-                    value={formData.aisleId} 
-                    onValueChange={(value) => handleInputChange('aisleId', value)} 
-                    required
+                  <Select
+                    value={selectedAisleId}
+                    onValueChange={handleAisleChange}
                     disabled={!selectedZoneId}
+                    required
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={selectedZoneId ? "Select aisle" : "Select zone first"} />
+                      <SelectValue placeholder="Select Aisle" />
                     </SelectTrigger>
                     <SelectContent>
-                      {filteredAisles.map((aisle) => (
+                      {aisles.map((aisle: any) => (
                         <SelectItem key={aisle.id} value={aisle.id}>
                           {aisle.name}
                         </SelectItem>
@@ -227,61 +242,6 @@ export default function EditBinModal({ bin, isOpen, onClose }: EditBinModalProps
                   placeholder="Describe the bin location and purpose"
                   rows={2}
                   required
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="capacity">Capacity (units)</Label>
-                  <Input
-                    id="capacity"
-                    type="number"
-                    value={formData.capacity}
-                    onChange={(e) => handleInputChange('capacity', e.target.value)}
-                    placeholder="100"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="weight">Max Weight (lbs)</Label>
-                  <Input
-                    id="weight"
-                    type="number"
-                    value={formData.weight}
-                    onChange={(e) => handleInputChange('weight', e.target.value)}
-                    placeholder="500"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="height">Height (ft)</Label>
-                  <Input
-                    id="height"
-                    type="number"
-                    step="0.1"
-                    value={formData.height}
-                    onChange={(e) => handleInputChange('height', e.target.value)}
-                    placeholder="8.5"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="barcode">Barcode/QR Code</Label>
-                <Input
-                  id="barcode"
-                  value={formData.barcode}
-                  onChange={(e) => handleInputChange('barcode', e.target.value)}
-                  placeholder="Barcode or QR code for this bin"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="notes">Additional Notes</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => handleInputChange('notes', e.target.value)}
-                  placeholder="Any additional information about this bin"
-                  rows={2}
                 />
               </div>
             </CardContent>

@@ -27,70 +27,64 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Plus, MoreHorizontal, Edit, Trash2, Package } from 'lucide-react';
 import CreateBinModal from '@/components/wms-config/create-bin-modal';
 import EditBinModal from '@/components/wms-config/edit-bin-modal';
-import { bins, aisles, zones, locations, getAisleById, getZoneById, getLocationById } from '@/lib/mock-data';
-import { Plus, MoreHorizontal, Edit, Trash2, Package } from 'lucide-react';
 
-export default function BinsManagement() {
+export default function BinsManagement({ locations }: any) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingBin, setEditingBin] = useState<any>(null);
   const [selectedLocationId, setSelectedLocationId] = useState<string>('all');
   const [selectedZoneId, setSelectedZoneId] = useState<string>('all');
   const [selectedAisleId, setSelectedAisleId] = useState<string>('all');
 
-  // Filter zones by selected location
-  const filteredZones = selectedLocationId === 'all' 
-    ? zones 
-    : zones.filter(zone => zone.locationId === selectedLocationId);
+  const handleEditBin = (bin: any) => setEditingBin(bin);
+  const handleDeleteBin = async (id: string) => {
+    const deleteBinRequest = await fetch(`/api/other/wms-config/bins?id=${id}`, {
+      method: 'DELETE',
+    });
 
-  // Filter aisles by selected zone
-  const filteredAisles = selectedZoneId === 'all' 
-    ? aisles.filter(aisle => {
-        if (selectedLocationId === 'all') return true;
-        const zone = getZoneById(aisle.zoneId);
-        return zone?.locationId === selectedLocationId;
-      })
-    : aisles.filter(aisle => aisle.zoneId === selectedZoneId);
+    const deleteBinResponse = await deleteBinRequest.json();
 
-  // Filter bins by selected aisle
-  const filteredBins = selectedAisleId === 'all' 
-    ? bins.filter(bin => {
-        if (selectedZoneId !== 'all') {
-          const aisle = getAisleById(bin.aisleId);
-          return aisle?.zoneId === selectedZoneId;
-        }
-        if (selectedLocationId !== 'all') {
-          const aisle = getAisleById(bin.aisleId);
-          const zone = aisle ? getZoneById(aisle.zoneId) : null;
-          return zone?.locationId === selectedLocationId;
-        }
-        return true;
-      })
-    : bins.filter(bin => bin.aisleId === selectedAisleId);
+    if (!deleteBinRequest.ok) {
+      alert(`Error deleting bin: ${deleteBinResponse.error}`);
+      return;
+    }
 
-  // Only show locations that have advanced WMS enabled
-  const wmsEnabledLocations = locations.filter(location => location.advancedWMS);
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  }
 
-  const handleEditBin = (bin: any) => {
-    setEditingBin(bin);
-  };
-
-  const handleDeleteBin = (binId: string) => {
-    console.log('Deleting bin:', binId);
-    // Here you would typically make an API call to delete the bin
-  };
-
-  const handleLocationChange = (locationId: string) => {
-    setSelectedLocationId(locationId);
+  const handleLocationChange = (id: string) => {
+    setSelectedLocationId(id);
     setSelectedZoneId('all');
     setSelectedAisleId('all');
   };
 
-  const handleZoneChange = (zoneId: string) => {
-    setSelectedZoneId(zoneId);
+  const handleZoneChange = (id: string) => {
+    setSelectedZoneId(id);
     setSelectedAisleId('all');
   };
+
+  const filteredBins = locations.flatMap((location: any) =>
+    (selectedLocationId === 'all' || selectedLocationId === location.id)
+      ? (location.zones ?? []).flatMap((zone: any) =>
+          (selectedZoneId === 'all' || selectedZoneId === zone.id)
+            ? (zone.aisles ?? []).flatMap((aisle: any) =>
+                (selectedAisleId === 'all' || selectedAisleId === aisle.id)
+                  ? (aisle.bins ?? []).map((bin: any) => ({
+                      bin,
+                      aisle,
+                      zone,
+                      location,
+                    }))
+                  : []
+              )
+            : []
+        )
+      : []
+  );
 
   return (
     <div className="space-y-6">
@@ -113,57 +107,69 @@ export default function BinsManagement() {
               <span>All Bins</span>
             </CardTitle>
             <div className="flex items-center space-x-4">
+              {/* Location Filter */}
               <div className="flex items-center space-x-2">
                 <label className="text-sm font-medium text-slate-600">Location:</label>
                 <Select value={selectedLocationId} onValueChange={handleLocationChange}>
                   <SelectTrigger className="w-40">
-                    <SelectValue />
+                    <SelectValue placeholder="Select Location" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Locations</SelectItem>
-                    {wmsEnabledLocations.map((location) => (
-                      <SelectItem key={location.id} value={location.id}>
-                        {location.name}
+                    {locations.map((loc: any) => (
+                      <SelectItem key={loc.id} value={loc.id}>
+                        {loc.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Zone Filter */}
               <div className="flex items-center space-x-2">
                 <label className="text-sm font-medium text-slate-600">Zone:</label>
                 <Select value={selectedZoneId} onValueChange={handleZoneChange}>
                   <SelectTrigger className="w-40">
-                    <SelectValue />
+                    <SelectValue placeholder="Select Zone" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Zones</SelectItem>
-                    {filteredZones.map((zone) => (
-                      <SelectItem key={zone.id} value={zone.id}>
-                        {zone.name}
-                      </SelectItem>
-                    ))}
+                    {locations.flatMap((loc: any) =>
+                      (loc.zones ?? []).map((zone: any) => (
+                        <SelectItem key={zone.id} value={zone.id}>
+                          {zone.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Aisle Filter */}
               <div className="flex items-center space-x-2">
                 <label className="text-sm font-medium text-slate-600">Aisle:</label>
                 <Select value={selectedAisleId} onValueChange={setSelectedAisleId}>
                   <SelectTrigger className="w-40">
-                    <SelectValue />
+                    <SelectValue placeholder="Select Aisle" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Aisles</SelectItem>
-                    {filteredAisles.map((aisle) => (
-                      <SelectItem key={aisle.id} value={aisle.id}>
-                        {aisle.name}
-                      </SelectItem>
-                    ))}
+                    {locations.flatMap((loc: any) =>
+                      (loc.zones ?? []).flatMap((zone: any) =>
+                        (zone.aisles ?? []).map((aisle: any) => (
+                          <SelectItem key={aisle.id} value={aisle.id}>
+                            {aisle.name}
+                          </SelectItem>
+                        ))
+                      )
+                    )}
                   </SelectContent>
                 </Select>
               </div>
             </div>
           </div>
         </CardHeader>
+
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -179,84 +185,74 @@ export default function BinsManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredBins.map((bin) => {
-                const aisle = getAisleById(bin.aisleId);
-                const zone = aisle ? getZoneById(aisle.zoneId) : null;
-                const location = zone ? getLocationById(zone.locationId) : null;
-                return (
-                  <TableRow key={bin.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium text-slate-900">{bin.name}</div>
-                        <div className="text-sm text-slate-500">{bin.id}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium text-slate-900">{aisle?.name}</div>
-                        <div className="text-sm text-slate-500">{aisle?.id}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium text-slate-900">{zone?.name}</div>
-                        <div className="text-sm text-slate-500">{zone?.id}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium text-slate-900">{location?.name}</div>
-                        <div className="text-sm text-slate-500">{location?.type}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-slate-600">
-                      {bin.description}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{bin.binType || 'Standard'}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">Active</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleEditBin(bin)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Bin
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            onClick={() => handleDeleteBin(bin.id)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete Bin
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+              {filteredBins.map(({ bin, aisle, zone, location }: any) => (
+                <TableRow key={bin.id}>
+                  <TableCell>
+                    <div className="font-medium text-slate-900">{bin.name}</div>
+                    <div className="text-sm text-slate-500">{bin.code}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="font-medium text-slate-900">{aisle?.name}</div>
+                    <div className="text-sm text-slate-500">{aisle?.code}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="font-medium text-slate-900">{zone?.name}</div>
+                    <div className="text-sm text-slate-500">{zone?.code}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="font-medium text-slate-900">{location?.name}</div>
+                    <div className="text-sm text-slate-500">{location?.type}</div>
+                  </TableCell>
+                  <TableCell className="text-sm text-slate-600">{bin.description}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{bin.binType || 'Standard'}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">Active</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => handleEditBin(bin)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit Bin
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => handleDeleteBin(bin.id)}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete Bin
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {filteredBins.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center text-slate-500 py-10">
+                    No bins found for the selected filters.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      <CreateBinModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-      />
+      <CreateBinModal locations={locations} isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} />
 
       {editingBin && (
         <EditBinModal
+            locations={locations}
           bin={editingBin}
           isOpen={!!editingBin}
           onClose={() => setEditingBin(null)}

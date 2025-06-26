@@ -42,7 +42,7 @@ export default function WMSConfigClient({ locations }: any) {
         </TabsContent>
 
         <TabsContent value="bins" className="space-y-6">
-          <BinsManagement />
+          <BinsManagement locations={locations} />
         </TabsContent>
       </Tabs>
     </div>
