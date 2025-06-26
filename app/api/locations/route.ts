@@ -50,7 +50,7 @@ export async function POST(request: Request) {
         const addressData = body.address;
 
         delete body.address; // Remove address from the main body to avoid duplication
-        
+
         Object.keys(body).forEach(key => {
             if (body[key] === null || body[key] === undefined || body[key] === '') {
                 delete body[key]; // Remove null or undefined fields
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
         // if no parent location ID is provided, remove the parentLocation field
         if (body.parentLocation?.connect?.id === '') {
             delete body.parentLocation;
-            }
+        }
         console.log("Creating new location with data:", body);
 
         const newLocation = await RecordController.create('location', body);
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
             } else {
                 console.warn("No valid address fields provided, skipping address creation.");
             }
-    
+
             return NextResponse.json({ locationCreated: true }, { status: 200 });
         } else {
             console.error("Failed to create location:", newLocation.errorMessage);
@@ -112,7 +112,7 @@ export async function PATCH(request: Request) {
         const addressData = body.address;
 
         delete body.address; // Remove address from the main body to avoid duplication
-        
+
         Object.keys(body).forEach(key => {
             if (body[key] === null || body[key] === undefined || body[key] === '') {
                 delete body[key]; // Remove null or undefined fields
@@ -122,7 +122,7 @@ export async function PATCH(request: Request) {
         // if no parent location ID is provided, remove the parentLocation field
         if (body.parentLocation?.connect?.id === '') {
             delete body.parentLocation;
-            }
+        }
 
         console.log("Updating location with data:", body);
 
@@ -158,62 +158,61 @@ export async function PATCH(request: Request) {
         });
 
         // Remove null or undefined fields, but preserve empty strings for clearing fields
-Object.keys(addressData).forEach(key => {
-    if (addressData[key] === null || addressData[key] === undefined) {
-        delete addressData[key];
-    }
-});
+        Object.keys(addressData).forEach(key => {
+            if (addressData[key] === null || addressData[key] === undefined) {
+                delete addressData[key];
+            }
+        });
 
-const existingAddress = await GetDataByField('locationId', body.id, 'locationAddress' as keyof TableMap);
+        const existingAddress = await GetDataByField('locationId', body.id, 'locationAddress' as keyof TableMap);
 
-if (existingAddress.success && existingAddress.data.length > 0) {
-    // Update existing address (even with empty fields)
-    const addressUpdateResult = await RecordController.load(existingAddress.data[0].id, 'locationAddress');
+        if (existingAddress.success && existingAddress.data.length > 0) {
+            // Update existing address (even with empty fields)
+            const addressUpdateResult = await RecordController.load(existingAddress.data[0].id, 'locationAddress');
 
-    if (!addressUpdateResult) {
-        console.error("Existing address not found for update");
-        return NextResponse.json({ error: "Existing address not found" }, { status: 404 });
-    }
+            if (!addressUpdateResult) {
+                console.error("Existing address not found for update");
+                return NextResponse.json({ error: "Existing address not found" }, { status: 404 });
+            }
 
-    let addressChangesMade = false;
+            let addressChangesMade = false;
 
-    Object.keys(addressData).forEach(key => {
-        let previousValue = addressUpdateResult.getValue(key);
-        let currentValue = addressData[key];
+            Object.keys(addressData).forEach(key => {
+                let previousValue = addressUpdateResult.getValue(key);
+                let currentValue = addressData[key];
 
-        if (isValidDate(new Date(currentValue))) {
-            previousValue = new Date(previousValue);
-            currentValue = new Date(currentValue);
+                if (isValidDate(new Date(currentValue))) {
+                    previousValue = new Date(previousValue);
+                    currentValue = new Date(currentValue);
+                }
+
+                if (previousValue !== currentValue) {
+                    console.log(`Updating address field ${key}: ${previousValue} -> ${currentValue}`);
+                    addressUpdateResult.setValue(key, currentValue);
+                    addressChangesMade = true;
+                }
+            });
+
+            if (addressChangesMade) {
+                console.log("Changes made to address, preparing to save.");
+                await addressUpdateResult.save();
+            } else {
+                console.log("No changes made to address.");
+            }
+        } else if (Object.keys(addressData).length > 0) {
+            // Create a new address only if there’s something to create
+            addressData.location = { connect: { id: body.id } };
+            const addressCreationResult = await RecordController.create('locationAddress', addressData);
+
+            if (addressCreationResult.success) {
+                console.log("Address created successfully:", addressCreationResult);
+            } else {
+                console.error("Failed to create address:", addressCreationResult.errorMessage);
+                return NextResponse.json({ error: `Location updated but there was an error saving the address information! Error: ${addressCreationResult.errorMessage}` }, { status: 500 });
+            }
+        } else {
+            console.warn("No address fields provided, and no existing address to update.");
         }
-
-        if (previousValue !== currentValue) {
-            console.log(`Updating address field ${key}: ${previousValue} -> ${currentValue}`);
-            addressUpdateResult.setValue(key, currentValue);
-            addressChangesMade = true;
-        }
-    });
-
-    if (addressChangesMade) {
-        console.log("Changes made to address, preparing to save.");
-        await addressUpdateResult.save();
-    } else {
-        console.log("No changes made to address.");
-    }
-} else if (Object.keys(addressData).length > 0) {
-    // Create a new address only if there’s something to create
-    addressData.location = { connect: { id: body.id } };
-    const addressCreationResult = await RecordController.create('locationAddress', addressData);
-
-    if (addressCreationResult.success) {
-        console.log("Address created successfully:", addressCreationResult);
-    } else {
-        console.error("Failed to create address:", addressCreationResult.errorMessage);
-        return NextResponse.json({ error: `Location updated but there was an error saving the address information! Error: ${addressCreationResult.errorMessage}` }, { status: 500 });
-    }
-} else {
-    console.warn("No address fields provided, and no existing address to update.");
-}
-
 
         if (!changesMade) {
             console.log("No changes made to the location");
