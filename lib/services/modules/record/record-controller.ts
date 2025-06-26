@@ -26,8 +26,13 @@ export abstract class RecordController {
         return new RecordObject(id, type, fetchData.data);
     }
 
-    static async delete(id: number, type: string): Promise<boolean> {
-        return true;
+    static async delete(id: string, type: string): Promise<Result> {
+        try {
+            const deleteRecord = await db_controller.Delete(id, type as keyof db_controller.TableMap);
+            return Result.ok();
+        } catch (error) {
+            return Result.fail(`Failed to delete record of type ${type} with ID ${id}. Error: ${error}`, 500);
+        }
     }
 
     static async copy(id: number, type: string): Promise<RecordObject | null> {

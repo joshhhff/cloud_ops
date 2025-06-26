@@ -34,11 +34,7 @@ export async function GetAll<T extends keyof TableMap>(table: T): Promise<Result
         const data = await (prisma[table] as any).findMany();
         console.log(`Fetched ${data.length} records from ${table} table`);
 
-        if (data.length > 0) {
-            return Result.ok(data);
-        } else {
-            return Result.fail("No data found");
-        }
+        return Result.ok(data.length > 0 ? data : 'No data found')
     } catch (error: any) {
         console.error("Error fetching data:", error);
         return Result.fail(error);
