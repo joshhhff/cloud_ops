@@ -32,8 +32,12 @@ const saveUpdatedLocation = await loadLocation.save();
 
 ### Progress
 - Added support for all CRUD actions for Zones within Locations
-- Zones can now be created, read, updated, and deleted as part of the WMS module
+- Added support for all CRUD actions for Aisles within Zones
+- Added support for all CRUD actions for Bins within Aisles
+- Added support for DELETE action for Locations
 
 ### Next Steps
-1. Implement CRUD actions for Aisles within Zones
-2. Continue with Bins and Inventory Management after Aisles are complete
+1. Work on Inventory Management module can start
+    - Placing stock of an Item/Product in a Bin (which belongs to an Aisle -> Zone -> Location)
+    - This also means CRUD actions for Items are now needed - I currently have work on this saved locally which isn't
+      committed to GitHub yet, so this will be committed once I have Inventory Management set up
