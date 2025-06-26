@@ -25,6 +25,17 @@ export class RecordObject {
         return this.data ? this.data[key] : undefined;
     }
 
+    deleteProperty(key: string): RecordObject | Error {
+        if (!this.data || !(key in this.data)) {
+            return new Error(`Property ${key} does not exist in data`);
+        }
+
+        delete this.data[key];
+        console.log(`Deleted property ${key}`);
+        
+        return this;
+    }
+
     JSON(): Record<string, any> {
         return {
             id: this.id,

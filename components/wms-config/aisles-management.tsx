@@ -37,36 +37,40 @@ export default function AislesManagement({ locations }: any) {
   const [selectedLocationId, setSelectedLocationId] = useState<string>('all');
   const [selectedZoneId, setSelectedZoneId] = useState<string>('all');
 
-  // Filter zones by selected location
-  const filteredZones = selectedLocationId === 'all' 
-    ? zones 
-    : zones.filter(zone => zone.locationId === selectedLocationId);
-
-  // Filter aisles by selected zone
-  const filteredAisles = selectedZoneId === 'all' 
-    ? aisles.filter(aisle => {
-        if (selectedLocationId === 'all') return true;
-        const zone = getZoneById(aisle.zoneId);
-        return zone?.locationId === selectedLocationId;
-      })
-    : aisles.filter(aisle => aisle.zoneId === selectedZoneId);
-
-  // Only show locations that have advanced WMS enabled
-  const wmsEnabledLocations = locations.filter((location: any) => location.advancedWMS);
-
   const handleEditAisle = (aisle: any) => {
     setEditingAisle(aisle);
   };
 
-  const handleDeleteAisle = (aisleId: string) => {
+  const handleDeleteAisle = async (aisleId: string, numberOfBins: number) => {
     console.log('Deleting aisle:', aisleId);
     // Here you would typically make an API call to delete the aisle
+    if (numberOfBins > 0) {
+      alert('Cannot delete zone with existing aisles. Please remove aisles first.');
+      return;
+    }
+
+    const deleteAisleRequest = await fetch(`/api/other/wms-config/aisles?id=${aisleId}`, {
+      method: 'DELETE',
+    });
+
+    const deleteAisleResponse = await deleteAisleRequest.json();
+
+    if (!deleteAisleRequest.ok) {
+      alert(`Error deleting zone: ${deleteAisleResponse.error}`);
+      return;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
   };
 
   const handleLocationChange = (locationId: string) => {
     setSelectedLocationId(locationId);
     setSelectedZoneId('all'); // Reset zone filter when location changes
   };
+
+  console.log('locations', locations); 
 
   return (
     <div className="space-y-6">
@@ -97,7 +101,7 @@ export default function AislesManagement({ locations }: any) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Locations</SelectItem>
-                    {wmsEnabledLocations.map((location) => (
+                    {locations.map((location: any) => (
                       <SelectItem key={location.id} value={location.id}>
                         {location.name}
                       </SelectItem>
@@ -113,11 +117,16 @@ export default function AislesManagement({ locations }: any) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Zones</SelectItem>
-                    {filteredZones.map((zone) => (
-                      <SelectItem key={zone.id} value={zone.id}>
-                        {zone.name}
-                      </SelectItem>
-                    ))}
+                    {locations.map((location: any) => {
+                        return location.zones.map((zone: any) => {
+                            return (
+
+                                <SelectItem key={zone.id} value={zone.id}>
+                                  {zone.name}
+                                </SelectItem>
+                            )
+                        }
+                    )})}
                   </SelectContent>
                 </Select>
               </div>
@@ -138,21 +147,21 @@ export default function AislesManagement({ locations }: any) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAisles.map((aisle) => {
-                const zone = getZoneById(aisle.zoneId);
-                const location = zone ? getLocationById(zone.locationId) : null;
-                return (
-                  <TableRow key={aisle.id}>
+              {locations.map((location: any) => {
+                return location.zones.map((zone: any) => {
+                    return zone.aisles.map((aisle: any) => {
+                        return (
+                            <TableRow key={aisle.id}>
                     <TableCell>
                       <div>
                         <div className="font-medium text-slate-900">{aisle.name}</div>
-                        <div className="text-sm text-slate-500">{aisle.id}</div>
+                        <div className="text-sm text-slate-500">{aisle.code}</div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div>
                         <div className="font-medium text-slate-900">{zone?.name}</div>
-                        <div className="text-sm text-slate-500">{zone?.id}</div>
+                        <div className="text-sm text-slate-500">{zone?.code}</div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -165,7 +174,7 @@ export default function AislesManagement({ locations }: any) {
                       {aisle.description}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">0 bins</Badge>
+                      <Badge variant="outline">{aisle?.bins.length} bins</Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary">Active</Badge>
@@ -185,7 +194,7 @@ export default function AislesManagement({ locations }: any) {
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 
-                            onClick={() => handleDeleteAisle(aisle.id)}
+                            onClick={() => handleDeleteAisle(aisle.id, aisle?.bins.length)}
                             className="text-red-600"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
@@ -195,7 +204,9 @@ export default function AislesManagement({ locations }: any) {
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                );
+                        );
+                    });
+                });
               })}
             </TableBody>
           </Table>
@@ -203,12 +214,14 @@ export default function AislesManagement({ locations }: any) {
       </Card>
 
       <CreateAisleModal
+        locations={locations}
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
       />
 
       {editingAisle && (
         <EditAisleModal
+            locations={locations}
           aisle={editingAisle}
           isOpen={!!editingAisle}
           onClose={() => setEditingAisle(null)}

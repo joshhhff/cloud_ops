@@ -105,9 +105,6 @@ export default async function WMSConfig() {
     };
 
     const locationsResult = await locationData();
-    console.log("Locations in WMS Config:", locationsResult);
-    console.log('Zones', locationsResult[0]?.zones);
-    console.log('Aisles in first zone:', locationsResult[0]?.zones[0]?.aisles);
 
     return (
         <Suspense fallback={<SystemLoadingPage />}>

@@ -23,20 +23,17 @@ import { zones, locations, getLocationById } from '@/lib/mock-data';
 import { Plus, Grid3X3 } from 'lucide-react';
 
 interface CreateAisleModalProps {
+    locations: any[];
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function CreateAisleModal({ isOpen, onClose }: CreateAisleModalProps) {
+export default function CreateAisleModal({ locations, isOpen, onClose }: CreateAisleModalProps) {
   const [formData, setFormData] = useState({
     name: '',
+    code: '',
     zoneId: '',
     description: '',
-    aisleType: '',
-    length: '',
-    width: '',
-    height: '',
-    notes: '',
   });
 
   const [selectedLocationId, setSelectedLocationId] = useState('');
@@ -50,34 +47,41 @@ export default function CreateAisleModal({ isOpen, onClose }: CreateAisleModalPr
     setFormData(prev => ({ ...prev, zoneId: '' })); // Reset zone when location changes
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Here you would typically make an API call to create the new aisle
     console.log('Creating new aisle:', formData);
 
+    const newAisleRequest = await fetch('/api/other/wms-config/aisles', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    });
+
+    const newAisleResponse = await newAisleRequest.json();
+
+    if (!newAisleRequest.ok) {
+        alert(`Error creating zone: ${newAisleResponse.error}`);
+        return;
+    } else {
+        if (typeof window !== 'undefined') {
+            window.location.reload();
+        }
+    }
+
     // Reset form and close modal
     setFormData({
       name: '',
+      code: '',
       zoneId: '',
       description: '',
-      aisleType: '',
-      length: '',
-      width: '',
-      height: '',
-      notes: '',
     });
     setSelectedLocationId('');
     onClose();
   };
-
-  // Only show locations that have advanced WMS enabled
-  const wmsEnabledLocations = locations.filter(location => location.advancedWMS);
-
-  // Filter zones by selected location
-  const filteredZones = selectedLocationId 
-    ? zones.filter(zone => zone.locationId === selectedLocationId)
-    : [];
 
   const aisleTypes = [
     'Standard Aisle',
@@ -88,6 +92,8 @@ export default function CreateAisleModal({ isOpen, onClose }: CreateAisleModalPr
     'Pick Aisle',
     'Bulk Storage Aisle'
   ];
+
+  console.log('locations:', locations);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -120,19 +126,14 @@ export default function CreateAisleModal({ isOpen, onClose }: CreateAisleModalPr
                   />
                 </div>
                 <div>
-                  <Label htmlFor="aisleType">Aisle Type</Label>
-                  <Select value={formData.aisleType} onValueChange={(value) => handleInputChange('aisleType', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select aisle type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {aisleTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="name">Aisle Code *</Label>
+                  <Input
+                    id="code"
+                    value={formData.code}
+                    onChange={(e) => handleInputChange('code', e.target.value)}
+                    placeholder="e.g., A1, B2, Main-01"
+                    required
+                  />
                 </div>
               </div>
 
@@ -144,7 +145,7 @@ export default function CreateAisleModal({ isOpen, onClose }: CreateAisleModalPr
                       <SelectValue placeholder="Select location first" />
                     </SelectTrigger>
                     <SelectContent>
-                      {wmsEnabledLocations.map((location) => (
+                      {locations.map((location) => (
                         <SelectItem key={location.id} value={location.id}>
                           {location.name}
                         </SelectItem>
@@ -164,71 +165,31 @@ export default function CreateAisleModal({ isOpen, onClose }: CreateAisleModalPr
                       <SelectValue placeholder={selectedLocationId ? "Select zone" : "Select location first"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {filteredZones.map((zone) => (
+                        {/* 
+                        
+                        - this is just because typescript complains about selectedLocationId being undefined at first
+                        - however all zones won't ever be listed - front end logic exists to only enable this field once there is a selected location
+                        */}
+                    {(selectedLocationId
+                        ? locations.find((location: any) => location.id === selectedLocationId)?.zones
+                        : locations.flatMap((location: any) => location.zones)
+                    ).map((zone: any) => (
                         <SelectItem key={zone.id} value={zone.id}>
-                          {zone.name}
+                            {zone.name}
                         </SelectItem>
-                      ))}
+                    ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="description">Description *</Label>
+                <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   placeholder="Describe the purpose and contents of this aisle"
-                  rows={2}
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="length">Length (ft)</Label>
-                  <Input
-                    id="length"
-                    type="number"
-                    step="0.1"
-                    value={formData.length}
-                    onChange={(e) => handleInputChange('length', e.target.value)}
-                    placeholder="100"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="width">Width (ft)</Label>
-                  <Input
-                    id="width"
-                    type="number"
-                    step="0.1"
-                    value={formData.width}
-                    onChange={(e) => handleInputChange('width', e.target.value)}
-                    placeholder="12"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="height">Height (ft)</Label>
-                  <Input
-                    id="height"
-                    type="number"
-                    step="0.1"
-                    value={formData.height}
-                    onChange={(e) => handleInputChange('height', e.target.value)}
-                    placeholder="20"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="notes">Additional Notes</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => handleInputChange('notes', e.target.value)}
-                  placeholder="Any additional information about this aisle"
                   rows={2}
                 />
               </div>

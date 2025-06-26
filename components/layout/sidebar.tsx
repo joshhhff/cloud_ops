@@ -38,16 +38,11 @@ const peopleItems = [
   { name: 'Employees', href: '/employees', icon: UserCheck },
 ];
 
-const wmsItems = [
-  { name: 'Zones', href: '/wms/zones', icon: Warehouse },
-  { name: 'Aisles', href: '/wms/aisles', icon: ListOrdered },
-  { name: 'Bins', href: '/wms/bins', icon: Rows },
-];
-
 const otherItems = [
   { name: 'Integrations', href: '/integrations', icon: Integrations },
   { name: 'Analytics', href: '/other/analytics', icon: ChartAreaIcon },
   { name: 'Locations', href: '/other/locations', icon: Building2 },
+  { name: 'WMS Config', href: '/other/wms-config', icon: Warehouse },
   { name: 'Sales Classes', href: '/sales_classes', icon: FileText },
   { name: 'Sales Categories', href: '/sales_categories', icon: FileText },
 ];
@@ -161,15 +156,6 @@ export default function Sidebar() {
           () => setPeopleOpen(!peopleOpen),
           <Users className="h-5 w-5" />,
           peopleItems
-        )}
-
-        {/* WMS */}
-        {renderSection(
-          'WMS',
-          wmsOpen,
-          () => setWmsOpen(!wmsOpen),
-          <Warehouse className="h-5 w-5" />,
-          wmsItems
         )}
 
         {/* Other */}

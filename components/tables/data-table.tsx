@@ -13,7 +13,6 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, Filter, Download } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 interface Column {
@@ -27,11 +26,15 @@ interface DataTableProps {
   columns: Column[];
   title: string;
   searchKey?: string;
+  onRowClick?: (item: any) => void;
+  movePageOnRowClick?: boolean;
+  rowLink?: string;
 }
 
-export default function DataTable({ data, columns, title, searchKey = 'name' }: DataTableProps) {
-    const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState('');
+export default function DataTable({ data, columns, title, searchKey = 'name', onRowClick, movePageOnRowClick, rowLink }: DataTableProps) {
+  const router = useRouter();
+  
+    const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
   const filteredData = data.filter(item =>
@@ -75,6 +78,26 @@ export default function DataTable({ data, columns, title, searchKey = 'name' }: 
           {value}
         </Badge>
       );
+    } else if (key === 'isActive') {
+        return (
+            <Badge
+                variant={
+                    value ? 'secondary' : 'destructive'
+                }
+            >
+                {value ? 'Active' : 'Inactive'}
+            </Badge>
+        );
+    } else if (key === 'isFulfillable') {
+        return (
+            <Badge
+                variant={
+                    value ? 'secondary' : 'destructive'
+                }
+            >
+                {value ? 'Fulfillable' : 'Not Fulfillable'}
+            </Badge>
+        );
     }
     
     if (typeof value === 'number' && (key.includes('price') || key.includes('cost') || key.includes('total') || key.includes('Value'))) {
@@ -134,7 +157,15 @@ export default function DataTable({ data, columns, title, searchKey = 'name' }: 
           </TableHeader>
           <TableBody>
             {sortedData.map((item, index) => (
-              <TableRow key={index} className="hover:bg-slate-50" onClick={() => router.push(`/sales/${item.id}`)}>
+              <TableRow 
+                key={index} 
+                className={`hover:bg-slate-50 ${onRowClick ? 'cursor-pointer' : ''}`}
+                onClick={() => {
+                    onRowClick?.(item)
+
+                    if (!onRowClick && movePageOnRowClick && item.id && rowLink) router.push(rowLink.replace('[id]', item.id.toString()));
+                }}
+              >
                 {columns.map((column) => (
                   <TableCell key={column.key} className="text-slate-900">
                     {renderCellValue(item[column.key], column.key)}
