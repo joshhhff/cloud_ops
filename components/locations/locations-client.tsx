@@ -46,6 +46,7 @@ export default function LocationsClient({ locationData }: any) {
       {selectedLocationId && (
         <LocationModal
           location={locationData.find((loc: any) => loc.id === selectedLocationId)}
+          locations={locationData}
           isOpen={!!selectedLocationId}
           onClose={() => setSelectedLocationId(null)}
         />
@@ -53,6 +54,7 @@ export default function LocationsClient({ locationData }: any) {
 
       <LocationModal
         isCreateMode={true}
+        locations={locationData}
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
       />

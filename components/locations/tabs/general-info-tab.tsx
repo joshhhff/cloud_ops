@@ -10,9 +10,10 @@ type Props = {
     locationData: any;
     setLocationData: (update: (prev: any) => any) => void;
     isEdit: boolean;
+    locations: any[];
 };
 
-export default function GeneralInfoTab({ locationData, setLocationData, isEdit }: Props) {
+export default function GeneralInfoTab({ locationData, setLocationData, isEdit, locations }: Props) {
     const update = (field: string, value: any) => {
         setLocationData((prev: any) => ({ ...prev, [field]: value }));
     };
@@ -89,14 +90,27 @@ export default function GeneralInfoTab({ locationData, setLocationData, isEdit }
             </div>
 
             <div>
-            <Label>Parent Location ID</Label>
+            <Label>Parent Location</Label>
             {isEdit ? (
-                <Input
-                value={locationData.parentLocationId || ''}
-                onChange={(e) => update('parentLocationId', e.target.value)}
-                />
+                <Select
+                value={locationData.parentLocationId || ""}
+                onValueChange={(val) => update("parentLocationId", val)}
+                >
+                <SelectTrigger>
+                    <SelectValue placeholder="Select a parent location" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="null">None</SelectItem>
+                    {locations.filter((location) => location.id !== locationData.id)
+                        .map((location) => (
+                            <SelectItem key={location.id} value={location.id}>
+                                {location.name}
+                            </SelectItem>
+                        ))}
+                </SelectContent>
+                </Select>
             ) : (
-                <p>{locationData.parentLocationId}</p>
+                <p>{locationData.parentLocationId ? locations.find(location => location.id === locationData.parentLocationId).name : 'No Parent Location'}</p>
             )}
             </div>
 
