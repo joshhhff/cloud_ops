@@ -75,7 +75,7 @@ export default function EditAisleModal({ locations, aisle, isOpen, onClose }: Ed
         name: formData.name,
         code: formData.code,
         description: formData.description,
-        zone: formData.zoneId,
+        zoneId: formData.zoneId,
     }
 
     const updateAisleRequest = await fetch(`/api/other/wms-config/aisles`, {
