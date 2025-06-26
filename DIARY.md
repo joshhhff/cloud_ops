@@ -27,3 +27,13 @@ const saveUpdatedLocation = await loadLocation.save();
     - CRUD for Zones, Aisles, and Bins
 2. Set up Inventory Management after WMS is complete
 3. Begin work on Transactions and Fulfillment once Inventory Management is in place
+
+## 2025-06-26
+
+### Progress
+- Added support for all CRUD actions for Zones within Locations
+- Zones can now be created, read, updated, and deleted as part of the WMS module
+
+### Next Steps
+1. Implement CRUD actions for Aisles within Zones
+2. Continue with Bins and Inventory Management after Aisles are complete
