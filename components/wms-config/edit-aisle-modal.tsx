@@ -21,6 +21,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { zones, locations, getZoneById } from '@/lib/mock-data';
 import { Edit, Grid3X3 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface EditAisleModalProps {
     locations: any;
@@ -30,6 +31,7 @@ interface EditAisleModalProps {
 }
 
 export default function EditAisleModal({ locations, aisle, isOpen, onClose }: EditAisleModalProps) {
+    const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
     locationId: '',
@@ -92,9 +94,7 @@ export default function EditAisleModal({ locations, aisle, isOpen, onClose }: Ed
       alert(`Error updating zone: ${updateAisleResponse.error}`);
       return;
     } else {
-      if (typeof window !== 'undefined') {
-            window.location.reload();
-        }
+        router.push('/other/wms-config?activeTab=aisles')
     }
 
     onClose();

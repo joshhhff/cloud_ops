@@ -21,6 +21,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { zones, locations, getLocationById } from '@/lib/mock-data';
 import { Plus, Grid3X3 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface CreateAisleModalProps {
     locations: any[];
@@ -29,6 +30,7 @@ interface CreateAisleModalProps {
 }
 
 export default function CreateAisleModal({ locations, isOpen, onClose }: CreateAisleModalProps) {
+    const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -67,9 +69,7 @@ export default function CreateAisleModal({ locations, isOpen, onClose }: CreateA
         alert(`Error creating zone: ${newAisleResponse.error}`);
         return;
     } else {
-        if (typeof window !== 'undefined') {
-            window.location.reload();
-        }
+        router.push('/other/wms-config?activeTab=aisles')
     }
 
     // Reset form and close modal

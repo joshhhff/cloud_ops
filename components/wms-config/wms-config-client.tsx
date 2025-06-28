@@ -6,9 +6,12 @@ import ZonesManagement from '@/components/wms-config/zones-management';
 import AislesManagement from '@/components/wms-config/aisles-management';
 import BinsManagement from '@/components/wms-config/bins-management';
 import { MapPin, Grid3X3, Package } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 
 export default function WMSConfigClient({ locations }: any) {
-  const [activeTab, setActiveTab] = useState('zones');
+    const searchParams = useSearchParams();
+    const initialTab = searchParams.get('activeTab') || 'zones';
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   return (
     <div className="space-y-6">
