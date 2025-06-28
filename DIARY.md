@@ -41,3 +41,11 @@ const saveUpdatedLocation = await loadLocation.save();
     - Placing stock of an Item/Product in a Bin (which belongs to an Aisle -> Zone -> Location)
     - This also means CRUD actions for Items are now needed - I currently have work on this saved locally which isn't
       committed to GitHub yet, so this will be committed once I have Inventory Management set up
+
+## 28/06/2025
+
+### Progress
+- Just a small change, when creating/editing Zones, Aisles, Bins and saving, a URL parameter is used so that the same tab is auto selected when refreshing the page. This makes a more smooth transition and the user can see the new record appear in the list
+
+### Next Steps
+1. Work still needing on Inventory Management

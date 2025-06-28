@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Edit, MapPin } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface EditZoneModalProps {
   zone: any;
@@ -29,6 +30,7 @@ interface EditZoneModalProps {
 }
 
 export default function EditZoneModal({ zone, locations, isOpen, onClose }: EditZoneModalProps) {
+    const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -71,9 +73,7 @@ export default function EditZoneModal({ zone, locations, isOpen, onClose }: Edit
       alert(`Error updating zone: ${updateZoneResponse.error}`);
       return;
     } else {
-      if (typeof window !== 'undefined') {
-            window.location.reload();
-        }
+      router.push('/other/wms-config?activeTab=zones');
     }
 
     onClose();

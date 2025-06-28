@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, MapPin } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface CreateZoneModalProps {
     locations: any;
@@ -28,6 +29,7 @@ interface CreateZoneModalProps {
 }
 
 export default function CreateZoneModal({ locations, isOpen, onClose }: CreateZoneModalProps) {
+    const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -59,9 +61,7 @@ export default function CreateZoneModal({ locations, isOpen, onClose }: CreateZo
         alert(`Error creating zone: ${newZoneResponse.error}`);
         return;
     } else {
-        if (typeof window !== 'undefined') {
-            window.location.reload();
-        }
+       router.push('/other/wms-config?activeTab=zones');
     }
 
     // Reset form and close modal
