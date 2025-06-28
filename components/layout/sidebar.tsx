@@ -42,7 +42,7 @@ const otherItems = [
   { name: 'Integrations', href: '/integrations', icon: Integrations },
   { name: 'Analytics', href: '/other/analytics', icon: ChartAreaIcon },
   { name: 'Locations', href: '/other/locations', icon: Building2 },
-  { name: 'WMS Config', href: '/other/wms-config', icon: Warehouse },
+  { name: 'WMS Setup', href: '/other/wms-config', icon: Warehouse },
   { name: 'Sales Classes', href: '/sales_classes', icon: FileText },
   { name: 'Sales Categories', href: '/sales_categories', icon: FileText },
 ];
@@ -52,7 +52,6 @@ export default function Sidebar() {
 
   const [transactionsOpen, setTransactionsOpen] = useState(false);
   const [peopleOpen, setPeopleOpen] = useState(false);
-  const [wmsOpen, setWmsOpen] = useState(false);
   const [otherOpen, setOtherOpen] = useState(false);
 
   const renderSection = (
