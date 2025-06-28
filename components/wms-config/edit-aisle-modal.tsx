@@ -94,7 +94,7 @@ export default function EditAisleModal({ locations, aisle, isOpen, onClose }: Ed
       alert(`Error updating zone: ${updateAisleResponse.error}`);
       return;
     } else {
-        router.push('/other/wms-config?activeTab=aisles')
+        router.push('/other/wms-config?activeTab=aisles');
     }
 
     onClose();

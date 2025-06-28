@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Edit, Package } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface EditBinModalProps {
   locations: any[];
@@ -29,6 +30,7 @@ interface EditBinModalProps {
 }
 
 export default function EditBinModal({ locations, bin, isOpen, onClose }: EditBinModalProps) {
+    const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
     aisleId: '',
@@ -113,9 +115,7 @@ export default function EditBinModal({ locations, bin, isOpen, onClose }: EditBi
       alert(`Error updating bin: ${updateBinResponse.error}`);
       return;
     } else {
-      if (typeof window !== 'undefined') {
-            window.location.reload();
-        }
+      router.push('/other/wms-config?activeTab=bins');
     }
 
     onClose();

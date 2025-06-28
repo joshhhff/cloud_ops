@@ -69,7 +69,7 @@ export default function CreateAisleModal({ locations, isOpen, onClose }: CreateA
         alert(`Error creating zone: ${newAisleResponse.error}`);
         return;
     } else {
-        router.push('/other/wms-config?activeTab=aisles')
+        router.push('/other/wms-config?activeTab=aisles');
     }
 
     // Reset form and close modal

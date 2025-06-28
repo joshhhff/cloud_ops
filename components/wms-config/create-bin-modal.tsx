@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Package } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface CreateBinModalProps {
     locations: any[];
@@ -32,6 +33,7 @@ export default function CreateBinModal({
     isOpen,
     onClose,
 }: CreateBinModalProps) {
+    const router = useRouter();
     const [formData, setFormData] = useState({
         name: '',
         aisleId: '',
@@ -83,9 +85,7 @@ export default function CreateBinModal({
                 alert(`Error creating zone: ${newBinResponse.error}`);
                 return;
             } else {
-                if (typeof window !== 'undefined') {
-                    window.location.reload();
-                }
+                router.push('/other/wms-config?activeTab=bins');
             }
 
         // Reset form
