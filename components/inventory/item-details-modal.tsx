@@ -617,7 +617,8 @@ export default function ItemDetailsModal({ item, isOpen, onClose }: ItemDetailsM
             </DialogContent>
         </Dialog>
 
-        <StockAdjustmentModal
+        {/* THIS IS THE SECTION CAUSING ISSUES WITH PAGE-RELOADING/DELAY IN DATA LOADING WHEN CLICKING ON AN ITEM */}
+        {/* <StockAdjustmentModal
             item={item}
             isOpen={showStockAdjustment}
             onClose={() => setShowStockAdjustment(false)}
@@ -633,7 +634,7 @@ export default function ItemDetailsModal({ item, isOpen, onClose }: ItemDetailsM
                         setSelectedLocationStock(null);
                     }}
                 />
-            )}
+            )} */}
 
         {selectedLocationId && (
             <LocationStockModal
