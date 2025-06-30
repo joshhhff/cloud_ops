@@ -1,29 +1,22 @@
-import DataTable from '@/components/tables/data-table';
-import { inventoryItems } from '@/lib/mock-data';
+import { Suspense } from 'react';
+import InventoryClient from '@/components/inventory/inventory-client';
+import { GetAll, TableMap } from '@/lib/services/database/database-controller';
+import SystemLoadingPage from '@/components/ui/system-loading-page';
+import DatabaseFetchError from '@/components/ui/database-fetch-error';
 
-const columns = [
-  { key: 'id', label: 'Item ID', sortable: true },
-  { key: 'name', label: 'Product Name', sortable: true },
-  { key: 'category', label: 'Category', sortable: true },
-  { key: 'stock', label: 'Stock Level', sortable: true },
-  { key: 'reorderLevel', label: 'Reorder Level', sortable: true },
-  { key: 'unitCost', label: 'Unit Cost', sortable: true },
-];
+export default async function Inventory() {
 
-export default function Inventory() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Inventory Management</h1>
-        <p className="text-slate-600 mt-2">Track and manage your product inventory levels.</p>
-      </div>
-      
-      <DataTable 
-        data={inventoryItems} 
-        columns={columns} 
-        title="Inventory Items"
-        searchKey="name"
-      />
-    </div>
-  );
+    const itemsResult = await GetAll('item' as keyof TableMap);
+
+    if (!itemsResult.success) {
+        return <DatabaseFetchError title='There was an error fetching items' errorMessage={itemsResult.errorMessage || 'An unexpected error occured. Please contact your System Administrator'} />
+    }
+
+    console.log("Fetched items:", itemsResult.data);
+
+    return (
+        <Suspense fallback={<SystemLoadingPage />}>
+            <InventoryClient inventoryItems={itemsResult.data ?? []} />
+        </Suspense>
+    );
 }
